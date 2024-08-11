@@ -7,26 +7,47 @@ from typing import Literal, Optional
 
 from invokeai.app.invocations.primitives import ImageField, ImageOutput
 from invokeai.backend.util.devices import TorchDevice
-from invokeai.invocation_api import BaseInvocation, InputField, InvocationContext, WithMetadata, WithBoard, invocation
+from invokeai.invocation_api import BaseInvocation, Input, InputField, InvocationContext, WithMetadata, WithBoard, invocation
 
-VERT_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "shaders/invert-example/vert.glsl")
-FRAG_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "shaders/simple-postprocess-example/frag.glsl")
+
+
+SHADERS_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "shaders")
+
+def getDirs(filename: str):
+    dirs = []
+    all_entries = os.listdir(SHADERS_PATH)
+    for e in all_entries:
+        entry_path = os.path.join(SHADERS_PATH, e)
+        if os.path.isdir(entry_path):
+            if filename in os.listdir(entry_path):
+                dirs.append(e)
+    return dirs
+
+
+VERT_PATHS = Literal[tuple(getDirs('vert.glsl'))]
+FRAG_PATHS = Literal[tuple(getDirs('frag.glsl'))]
+
 
 @invocation(
     "glsl-render",
     title="GLSL Shader",
     tags=["glsl", "shader", "opengl"],
     category="image",
-    version="1.0.0",
+    version="1.1.0",
 )
 class GLSLShader(BaseInvocation, WithMetadata, WithBoard):
     """Applies a GLSL shader to an image"""
 
     image: ImageField = InputField(description="The image to apply shader to")
+    vertex_shader: VERT_PATHS =      InputField(default='default', input=Input.Direct)
+    fragment_shader: FRAG_PATHS = InputField(default='default', input=Input.Direct)
 
 
 
     def invoke(self, context: InvocationContext) -> ImageOutput:
+        full_vert = os.path.join(SHADERS_PATH, f"{self.vertex_shader}/vert.glsl")
+        full_frag = os.path.join(SHADERS_PATH, f"{self.fragment_shader}/frag.glsl")
+
         ctx = moderngl.create_standalone_context()
         #ctx.gc_mode = 'auto'
 
@@ -41,8 +62,8 @@ class GLSLShader(BaseInvocation, WithMetadata, WithBoard):
         fbo.use()
 
         program = ctx.program(
-            vertex_shader=open(VERT_PATH).read(),
-            fragment_shader=open(FRAG_PATH).read(),
+            vertex_shader=open(full_vert).read(),
+            fragment_shader=open(full_frag).read(),
         )
 
         vertices = np.array([
