@@ -1,7 +1,13 @@
 #version 330
 
+// this is an example shader. it will produce stupid output!
+// it adds noise but doesn't clamp anything. fun!
+// that said, it has some helper functions that you may
+// want to use in your shaders. i would look at the
+// postprocess example as a better starting point though.
+
 uniform sampler2D Texture; // image
-in vec2 v_text;            // res
+in vec2 uv;                 // res
 out vec4 f_color;
 
 vec3 rgb2hsb(vec3 c) {
@@ -36,10 +42,10 @@ vec4 grain(vec4 fragColor, vec2 uv){
 
 void main() {
 
-    vec4 texel = texture(Texture, v_text);
+    vec4 texel = texture(Texture, uv);
     f_color = texel;
 
-    vec4 grain = grain(f_color, v_text);
+    vec4 grain = grain(f_color, uv);
 
     f_color = mix(f_color, grain, 1.0);
 }
