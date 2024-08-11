@@ -3,6 +3,10 @@ GLSL Shader node for InvokeAI
 
 Not ready for use yet; I just posted it here for version control. Nevertheless,
 
+## Installation
+`git clone` this into your `nodes` folder as usual. 
+In your InvokeAI venv, `pip install moderngl glcontext`.
+
 ## Usage
 Choose a vert and frag shader from the dropdown menus. `default` for vert is usually fine.
 
