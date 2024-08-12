@@ -33,13 +33,13 @@ FRAG_PATHS = Literal[tuple(getDirs('frag.glsl'))]
     title="GLSL Shader",
     tags=["glsl", "shader", "opengl"],
     category="image",
-    version="1.1.0",
+    version="1.1.1",
 )
 class GLSLShader(BaseInvocation, WithMetadata, WithBoard):
     """Applies a GLSL shader to an image"""
 
-    image: ImageField = InputField(description="The image to apply shader to")
-    vertex_shader: VERT_PATHS =      InputField(default='default', input=Input.Direct)
+    image: ImageField           = InputField(description="The image to apply shader to")
+    vertex_shader: VERT_PATHS   = InputField(default='default', input=Input.Direct)
     fragment_shader: FRAG_PATHS = InputField(default='default', input=Input.Direct)
 
 
@@ -57,6 +57,7 @@ class GLSLShader(BaseInvocation, WithMetadata, WithBoard):
 
         texture = ctx.texture(pil_image.size, 3, data=image_data.tobytes(), dtype='f4')
         texture.use()
+        print(f"texture size: {texture.size}")
 
         fbo = ctx.framebuffer(color_attachments=[ctx.texture(pil_image.size, 3, dtype='f4')])
         fbo.use()
@@ -65,6 +66,15 @@ class GLSLShader(BaseInvocation, WithMetadata, WithBoard):
             vertex_shader=open(full_vert).read(),
             fragment_shader=open(full_frag).read(),
         )
+
+        #program['texture0'] = 0
+        #print(dir(program))
+        if "texture_size" in program:
+            print("*** texture_size exists!")
+            program["texture_size"].value = texture.size
+        else:
+            print("*** No texture_size, so not setting")
+
 
         vertices = np.array([
             -1.0,  1.0, 0.0, 1.0,
